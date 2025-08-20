@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTEC Grade Calculator</title>
+  <style>
+    :root {
+      --bg: #0f172a; /* slate-900 */
+      --panel: #111827; /* gray-900 */
+      --muted: #94a3b8; /* slate-400 */
+      --text: #e5e7eb; /* gray-200 */
+      --brand: #22d3ee; /* cyan-400 */
+      --ok: #22c55e; /* green-500 */
+      --warn: #f59e0b; /* amber-500 */
+      --bad: #ef4444; /* red-500 */
+      --card: #0b1220; /* custom */
+      --border: #1f2937; /* gray-800 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      background: radial-gradient(60rem 60rem at 120% -10%, #0369a1 0%, transparent 60%),
+                  radial-gradient(40rem 40rem at -20% -10%, #0ea5e9 0%, transparent 45%),
+                  var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+    .header { display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .title { font-size: clamp(1.3rem, 2.5vw, 2rem); font-weight: 800; letter-spacing: .2px; }
+    .subtitle { color: var(--muted); font-size: .95rem; }
+    .panel {
+      margin-top: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--border); border-radius: 16px; padding: 16px; backdrop-filter: blur(6px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; }
+    label { font-size: .85rem; color: var(--muted); }
+    select, input[type="text"], input[type="number"] {
+      background: #0b1220; border:1px solid var(--border); color: var(--text); border-radius: 12px; padding: 10px 12px; outline: none;
+    }
+    select:focus, input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(34,211,238,.2); }
+    button {
+      border: 1px solid var(--border); background: #0a0f1c; color: var(--text); padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600;
+      transition: transform .05s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    button:hover { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+    button:active { transform: translateY(1px); }
+    .btn-primary { background: linear-gradient(180deg, #0ea5e9, #0891b2); border-color: #0ea5e9; color: white; }
+    .btn-ghost { background: transparent; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: .95rem; }
+    th { color: var(--muted); font-weight: 700; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .chip { display:inline-flex; align-items:center; gap:8px; padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background:#0b1220; font-size:.85rem; }
+    .stat-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+    .stat h3 { margin: 0 0 6px; font-size:.85rem; color: var(--muted); font-weight:600; }
+    .stat .value { font-size: 1.4rem; font-weight:800; letter-spacing:.3px; }
+    .gradeBox { font-weight: 800; letter-spacing:.2px; padding: 10px 12px; border-radius:12px; display:inline-block; }
+    .grade--top { background: rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.35); color:#86efac; }
+    .grade--mid { background: rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:#facc15; }
+    .grade--low { background: rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.35); color:#fda4af; }
+    .footer { margin-top: 20px; color: var(--muted); font-size: .85rem; }
+    .flex { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .right { margin-left:auto; }
+    .small { font-size:.8rem; color:var(--muted); }
+    .removeBtn { color:#fda4af; border-color:#7f1d1d; background: rgba(127,29,29,.15); }
+    .removeBtn:hover { border-color:#ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:.8rem; background:#0b1220; border:1px solid var(--border); padding:2px 6px; border-radius:6px; }
+    @media (max-width: 720px){ .stat-grid{grid-template-columns:1fr;} .header {flex-direction:column; align-items:flex-start;} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">BTEC – Grade Calculator</div>
+        <div class="subtitle">Add units (GLH + grade), get total points and a final grade prediction using <strong>your provided boundaries</strong>.</div>
+      </div>
+      <div class="flex">
+        <!-- NEW: Student name field + Save PDF button (uses existing styles) -->
+        <input id="studentName" type="text" placeholder="Student name" />
+        <button id="exportPdf" class="btn-ghost">Save PDF</button>
+        <!-- Existing buttons unchanged -->
+        <button id="addUnit" class="btn-primary">+ Add Unit</button>
+        <button id="clearAll" class="btn-ghost">Reset</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <div class="chip">Per-unit points mapping (Pearson):
+          <span class="small">30 GLH → L1P 36, P 42, M 50, D 58</span>
+          <span class="small">•</span>
+          <span class="small">60 GLH → L1P 72, P 84, M 100, D 116</span>
+        </div>
+        <div class="small">Tip: Press <span class="kbd">Enter</span> in a field to recalc.</div>
+      </div>
+
+      <table id="unitTable">
+        <thead>
+          <tr>
+            <th style="width: 36px;">#</th>
+            <th>Unit name</th>
+            <th>GLH</th>
+            <th>Grade</th>
+            <th>Points</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="unitBody"></tbody>
+      </table>
+
+      <div class="stat-grid">
+        <div class="stat"><h3>Total units</h3><div class="value" id="statUnits">0</div></div>
+        <div class="stat"><h3>Total GLH</h3><div class="value" id="statGLH">0</div></div>
+        <div class="stat"><h3>Total points</h3><div class="value" id="statPoints">0</div></div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div id="finalGradeBox" class="gradeBox grade--low">Final grade: —</div>
+        <div class="small">Boundaries used: 190→DD, 175→D*D, 170→DD, 160→DM, 140→MM, 120→MP, 100→PP, 70→Level 1, else Unclassified.</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      • Grades supported per unit: <strong>L1P, P, M, D</strong> • GLH options: <strong>30 or 60</strong><br/>
+      • Final grade prediction applies your provided thresholds <em>in descending order</em>, matching the example list exactly.
+    </div>
+  </div>
+
+  <!-- jsPDF (for PDF generation) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <script>
+    // --- Per-unit points mapping (Pearson standard) ---
+    const unitPoints = {
+      30: { L1P: 36, P: 42, M: 50, D: 58 },
+      60: { L1P: 72, P: 84, M: 100, D: 116 }
+    };
+
+    // --- Final grade thresholds (AS PROVIDED BY USER) ---
+    // Interpreted literally, in descending order. The first match wins.
+    // Example list: 190→DD, 175→D*D, 170→DD, 160→DM, 140→MM, 120→MP, 100→PP, 70→Level 1, 30→Unclassified
+    const finalBoundaries = [
+      { min: 190, label: "Level 2 DD" },
+      { min: 175, label: "Level 2 D*D" },
+      { min: 170, label: "Level 2 DD" },
+      { min: 160, label: "Level 2 DM" },
+      { min: 140, label: "Level 2 MM" },
+      { min: 120, label: "Level 2 MP" },
+      { min: 100, label: "Level 2 PP" },
+      { min: 70,  label: "Level 1" },
+      { min: 0,   label: "Unclassified" }
+    ];
+
+    const unitBody = document.getElementById('unitBody');
+    const statUnits = document.getElementById('statUnits');
+    const statGLH = document.getElementById('statGLH');
+    const statPoints = document.getElementById('statPoints');
+    const finalGradeBox = document.getElementById('finalGradeBox');
+
+    let unitCount = 0;
+
+    function addUnitRow(prefill={}){
+      unitCount++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${unitCount}</td>
+        <td><input type="text" placeholder="e.g., The Online World" value="${prefill.name||''}"/></td>
+        <td>
+          <select class="glh">
+            <option value="30" ${prefill.glh==30? 'selected':''}>30</option>
+            <option value="60" ${prefill.glh==60? 'selected':''}>60</option>
+          </select>
+        </td>
+        <td>
+          <select class="grade">
+            <option value="L1P" ${prefill.grade==='L1P'? 'selected':''}>L1P</option>
+            <option value="P" ${prefill.grade==='P'? 'selected':''}>P</option>
+            <option value="M" ${prefill.grade==='M'? 'selected':''}>M</option>
+            <option value="D" ${prefill.grade==='D'? 'selected':''}>D</option>
+          </select>
+        </td>
+        <td class="points">0</td>
+        <td><button class="removeBtn">Remove</button></td>
+      `;
+
+      // wire up events
+      tr.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', recalc);
+        el.addEventListener('change', recalc);
+        el.addEventListener('keyup', (e)=>{ if(e.key==='Enter') recalc(); });
+      });
+      tr.querySelector('.removeBtn').addEventListener('click', ()=>{
+        tr.remove(); recalc();
+      });
+
+      unitBody.appendChild(tr);
+      recalc();
+    }
+
+    function calcPointsForRow(tr){
+      const glh = parseInt(tr.querySelector('.glh').value, 10);
+      const grade = tr.querySelector('.grade').value;
+      const pts = unitPoints[glh]?.[grade] ?? 0;
+      tr.querySelector('.points').textContent = pts;
+      return { glh, pts };
+    }
+
+    function gradeFromTotal(total){
+      for(const rule of finalBoundaries){
+        if(total >= rule.min) return rule.label;
+      }
+      return "Unclassified"; // fallback
+    }
+
+    function recalc(){
+      let totalUnits = 0; let totalGLH = 0; let totalPoints = 0;
+      document.querySelectorAll('#unitBody tr').forEach(tr => {
+        const { glh, pts } = calcPointsForRow(tr);
+        totalUnits += 1; totalGLH += glh; totalPoints += pts;
+      });
+      statUnits.textContent = totalUnits;
+      statGLH.textContent = totalGLH;
+      statPoints.textContent = totalPoints;
+
+      const grade = gradeFromTotal(totalPoints);
+      finalGradeBox.textContent = `Final grade: ${grade}`;
+      finalGradeBox.classList.remove('grade--top','grade--mid','grade--low');
+      if(["Level 2 D*D","Level 2 DD"].includes(grade)){
+        finalGradeBox.classList.add('grade--top');
+      } else if(["Level 2 DM","Level 2 MM","Level 2 MP","Level 2 PP","Level 1"].includes(grade)){
+        finalGradeBox.classList.add('grade--mid');
+      } else {
+        finalGradeBox.classList.add('grade--low');
+      }
+    }
+
+    // --- NEW: Export PDF (view in new tab) ---
+    document.getElementById('exportPdf').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) { alert('PDF library failed to load.'); return; }
+
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const student = (document.getElementById('studentName').value || '').trim() || '—';
+      const now = new Date().toLocaleString();
+
+      // Header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('BTEC Grade Calculator – Results', 14, 16);
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Student: ${student}`, 14, 26);
+      doc.text(`Generated: ${now}`, 14, 32);
+
+      // Table header
+      let y = 44;
+      doc.setFont('helvetica', 'bold');
+      doc.text('#', 14, y);
+      doc.text('Unit name', 22, y);
+      doc.text('GLH', 150, y);
+      doc.text('Grade', 170, y);
+      doc.text('Points', 190, y, { align: 'right' });
+      doc.setLineWidth(0.2);
+      doc.line(14, y+2, 196, y+2);
+      y += 8;
+
+      // Rows
+      doc.setFont('helvetica', 'normal');
+      const rows = Array.from(document.querySelectorAll('#unitBody tr'));
+      rows.forEach((tr, i) => {
+        const unitName = (tr.querySelector('input')?.value || '').trim() || '(Untitled unit)';
+        const glh = tr.querySelector('.glh')?.value || '';
+        const grade = tr.querySelector('.grade')?.value || '';
+        const pts = tr.querySelector('.points')?.textContent || '0';
+
+        const nameLines = doc.splitTextToSize(unitName, 120);
+        const rowHeight = 6 * nameLines.length;
+
+        // Page break if needed
+        if (y + rowHeight + 20 > 285) {
+          doc.addPage();
+          y = 20;
+          doc.setFont('helvetica', 'bold');
+          doc.text('#', 14, y);
+          doc.text('Unit name', 22, y);
+          doc.text('GLH', 150, y);
+          doc.text('Grade', 170, y);
+          doc.text('Points', 190, y, { align: 'right' });
+          doc.line(14, y+2, 196, y+2);
+          y += 8;
+          doc.setFont('helvetica', 'normal');
+        }
+
+        doc.text(String(i+1), 14, y);
+        doc.text(nameLines, 22, y);
+        doc.text(String(glh), 150, y);
+        doc.text(String(grade), 170, y);
+        doc.text(String(pts), 190, y, { align: 'right' });
+        y += rowHeight;
+      });
+
+      // Totals + Final grade
+      y += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Summary', 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Total units: ${statUnits.textContent}`, 14, y); y += 6;
+      doc.text(`Total GLH: ${statGLH.textContent}`, 14, y); y += 6;
+      const finalGradeText = (finalGradeBox.textContent || '').replace(/^Final grade:\s*/i, '');
+      doc.text(`Total points: ${statPoints.textContent}`, 14, y); y += 6;
+      doc.text(`Final grade: ${finalGradeText}`, 14, y);
+
+      // Open in new tab for viewing
+      const blobUrl = doc.output('bloburl');
+      window.open(blobUrl, '_blank');
+    });
+
+    // Buttons
+    document.getElementById('addUnit').addEventListener('click', ()=> addUnitRow());
+    document.getElementById('clearAll').addEventListener('click', ()=>{ unitBody.innerHTML=''; unitCount=0; recalc(); });
+
+    // Seed a few example rows for convenience
+    addUnitRow({ name: 'The Online World', glh: 30, grade: 'P' });
+    addUnitRow({ name: 'Technology Systems', glh: 30, grade: 'P' });
+    addUnitRow({ name: 'A Digital Portfolio', glh: 30, grade: 'P' });
+  </script>
+</body>
+</html>
