@@ -1,6 +1,6 @@
-✅ # Features Included
+✅ #Features Included
 
-🎯 ## Core Functionality
+🎯 ##Core Functionality
 
 - Add/remove BTEC units dynamically.
 
@@ -12,11 +12,11 @@
 
 - Final grade prediction using descending boundary matching logic.
 
-📄 ## Export
+📄 ##Export
 
 - Save results as a nicely formatted PDF.
 
-## Includes:
+##Includes:
 
 - Student name
 
@@ -30,7 +30,7 @@
 
 - Opens PDF in a new tab.
 
-🧑‍🎓 ## User Experience
+🧑‍🎓 ##User Experience
 
 - Clean, modern, responsive UI.
 
